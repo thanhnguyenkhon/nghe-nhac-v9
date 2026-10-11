@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NhacBox - Community Media Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --surface-color: #161e2e;
+            --text-main: #ffffff;
+            --text-secondary: #94a3b8;
+            --accent-gradient: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding-bottom: 120px; }
+
+        header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 28px; background-color: var(--surface-color);
+            position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #1e293b;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3); flex-wrap: wrap; gap: 10px;
+        }
+        .logo { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; color: white; cursor: pointer; }
+        .logo i { background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 26px; }
+        
+        .search-box {
+            display: flex; background: #0f172a; border: 1px solid #334155; border-radius: 40px;
+            overflow: hidden; width: 300px; padding-left: 16px;
+        }
+        .search-box input {
+            flex: 1; background: transparent; border: none; padding: 9px 0; color: white; outline: none; font-size: 14px;
+        }
+        .search-box button {
+            background: #1e293b; border: none; padding: 0 18px; color: white; cursor: pointer; border-left: 1px solid #334155;
+        }
+
+        .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .btn-action {
+            background: var(--accent-gradient); color: white; border: none; padding: 9px 16px;
+            border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;
+            font-size: 13px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+        .user-badge {
+            display: flex; align-items: center; gap: 8px; background: #1e293b; padding: 6px 14px; border-radius: 20px; border: 1px solid #334155; font-size: 13px;
+        }
+        .user-badge i { color: #a855f7; }
+
+        .container { max-width: 1300px; margin: 24px auto; padding: 0 20px; }
+        .section-title { font-size: 20px; font-weight: bold; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+        .section-title i { background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .media-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px;
+        }
+        .media-card {
+            background: var(--surface-color); border-radius: 14px; overflow: hidden; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s; border: 1px solid #1e293b; position: relative;
+        }
+        .media-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(168, 85, 247, 0.25); border-color: #a855f7; }
+        
+        .thumb-box { position: relative; width: 100%; aspect-ratio: 16/9; background: #0f172a; display: flex; align-items: center; justify-content: center; }
+        .thumb-box video { width: 100%; height: 100%; object-fit: cover; }
+        .thumb-box .audio-placeholder { font-size: 40px; color: #a855f7; }
+        .badge {
+            position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.85);
+            color: #ec4899; font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: bold; border: 1px solid #ec4899;
+        }
+        .media-info { padding: 14px; }
+        .media-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        .media-footer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+        .media-author { font-size: 13px; color: var(--text-secondary); }
+        
+        .btn-sub-action {
+            background: #334155; color: white; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: bold;
+        }
+        .btn-sub-action.subscribed { background: #10b981; }
+        .btn-delete-vid {
+            background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer;
+        }
+
+        /* Khung phát nổi */
+        .player-modal-box {
+            position: fixed; bottom: 85px; right: 24px; width: 380px; height: 220px;
+            background: #000; border-radius: 14px; overflow: hidden; border: 1px solid #334155;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8); z-index: 2000; display: none; flex-direction: column;
+        }
+        .player-modal-box.active { display: flex; }
+        .player-modal-header {
+            background: #1e293b; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center;
+            font-size: 13px; font-weight: bold; color: #a855f7;
+        }
+        .player-modal-header button { background: none; border: none; color: white; cursor: pointer; font-size: 15px; }
+        #activeVideo { width: 100%; flex: 1; outline: none; background: #000; display: none; }
+        .audio-visualizer-box { flex: 1; display: none; align-items: center; justify-content: center; background: radial-gradient(circle, #1e293b, #0b0f19); flex-direction: column; gap: 10px; }
+        .audio-visualizer-box i { font-size: 50px; color: #a855f7; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        .floating-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(15, 23, 42, 0.96);
+            backdrop-filter: blur(12px); border-top: 1px solid #1e293b; z-index: 1900;
+            display: flex; align-items: center; justify-content: space-between; padding: 10px 28px; height: 75px;
+        }
+        .player-left { display: flex; align-items: center; gap: 12px; width: 35%; }
+        .player-left .mini-icon { width: 45px; height: 45px; border-radius: 6px; background: #1e293b; display: flex; align-items: center; justify-content: center; color: #a855f7; font-size: 20px; }
+        .meta-info .title { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+        .meta-info .author { font-size: 12px; color: var(--text-secondary); }
+
+        .player-center { display: flex; align-items: center; gap: 20px; }
+        .player-center button { background: none; border: none; color: white; font-size: 18px; cursor: pointer; }
+
+        .player-right { display: flex; align-items: center; gap: 16px; }
+        .player-right button { background: none; border: none; color: white; cursor: pointer; font-size: 18px; }
+
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 3000; justify-content: center; align-items: center; padding: 15px;
+        }
+        .modal-content {
+            background: var(--surface-color); padding: 25px; border-radius: 18px; width: 100%; max-width: 420px;
+            border: 1px solid #334155; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        .modal-content h3 { margin-bottom: 18px; color: #a855f7; font-size: 17px; display: flex; align-items: center; gap: 10px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+        .form-group input { width: 100%; background: #0b0f19; border: 1px solid #334155; padding: 10px 14px; border-radius: 8px; color: white; outline: none; font-size: 14px; }
+        .form-group input[type="file"] { padding: 8px; cursor: pointer; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .btn-sub { background: var(--accent-gradient); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-can { background: #1e293b; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+        
+        #uploadStatus { font-size: 13px; color: #a855f7; text-align: center; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo"><i class="fa-solid fa-box"></i>NhacBox</div>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Tìm kiếm bài hát, video..." oninput="filterMedia(this.value)">
+            <button><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+        <div class="header-actions" id="headerActions"></div>
+    </header>
+
+    <div class="container">
+        <div class="section-title"><i class="fa-solid fa-globe"></i> Bảng tin cộng đồng (Realtime Sync)</div>
+        <div class="media-grid" id="mediaGrid"></div>
+    </div>
+
+    <!-- Khung phát nổi -->
+    <div class="player-modal-box" id="playerBox">
+        <div class="player-modal-header">
+            <span id="headerTitle">Đang phát</span>
+            <button onclick="closePlayerBox()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <video id="activeVideo" controls autoplay></video>
+        <div class="audio-visualizer-box" id="audioVisualizer">
+            <i class="fa-solid fa-compact-disc fa-spin"></i>
+            <span id="audioVisualizerTitle" style="font-size: 13px; color: #fff; padding: 0 10px; text-align: center;">Phát âm thanh MP3</span>
+        </div>
+        <audio id="activeAudio" style="display:none;" controls></audio>
+    </div>
+
+    <div class="floating-bar">
+        <div class="player-left">
+            <div class="mini-icon" id="miniIcon"><i class="fa-solid fa-music"></i></div>
+            <div class="meta-info">
+                <div class="title" id="bottomTitle">Chưa chọn nội dung</div>
+                <div class="author" id="bottomAuthor">---</div>
+            </div>
+        </div>
+        <div class="player-center">
+            <button onclick="togglePlayPause()"><i class="fa-solid fa-play" id="playPauseIcon"></i></button>
+        </div>
+        <div class="player-right">
+            <button onclick="openPlayerBox()"><i class="fa-solid fa-expand" style="color:#a855f7;"></i></button>
+        </div>
+    </div>
+
+    <!-- Modal Đăng nhập -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <h3><i class="fa-solid fa-user-lock"></i> Đăng nhập tài khoản</h3>
+            <div class="form-group"><label>Tên tài khoản:</label><input type="text" id="loginUsername" placeholder="Nhập tên..."></div>
+            <div class="form-group"><label>Mật khẩu:</label><input type="password" id="loginPassword" placeholder="Nhập mật khẩu..."></div>
+            <div class="modal-actions">
+                <button class="btn-can" onclick="closeModals()">Hủy</button>
+                <button class="btn-sub" onclick="handleLogin()">Đăng nhập</button>
+            </div>
+            <p style="margin-top: 15px; font-size: 13px; color: var(--text-secondary); text-align: center;">
+                Chưa có tài khoản? <a href="#" onclick="openRegisterModal(); return false;" style="color: #a855f7;">Đăng ký ngay</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Modal Đăng ký -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <h3><i class="fa-solid fa-user-plus"></i> Đăng ký tài khoản (1 Gmail / Tài khoản)</h3>
+            <div class="form-group"><label>Địa chỉ Gmail:</label><input type="email" id="regEmail" placeholder="example@gmail.com"></div>
+            <div class="form-group"><label>Tên tài khoản:</label><input type="text" id="regUsername" placeholder="Chọn tên..."></div>
+            <div class="form-group"><label>Mật khẩu:</label><input type="password" id="regPassword" placeholder="Tạo mật khẩu..."></div>
+            <div class="modal-actions">
+                <button class="btn-can" onclick="closeModals()">Hủy</button>
+                <button class="btn-sub" onclick="handleRegister()">Đăng ký</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Đăng bài -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <h3><i class="fa-solid fa-cloud-arrow-up"></i> Đăng bài lên NhacBox</h3>
+            <div class="form-group"><label>Tiêu đề bài viết:</label><input type="text" id="inputTitle" placeholder="Nhập tiêu đề..."></div>
+            <div class="form-group">
+                <label>Chọn file / Quay video trực tiếp từ điện thoại:</label>
+                <input type="file" id="inputFile" accept="audio/*,video/*">
+            </div>
+            <div id="uploadStatus">Đang tải tệp lên đám mây... Vui lòng đợi trong giây lát!</div>
+            <div class="modal-actions">
+                <button class="btn-can" onclick="closeModals()">Hủy</button>
+                <button class="btn-sub" onclick="uploadFileToCloudStorage()">Đăng bài ngay</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDxCtOZ9t3kZrflPCE8nndGdkdcKz3W_Y",
+            authDomain: "nhacbox-7c68f.firebaseapp.com",
+            projectId: "nhacbox-7c68f",
+            storageBucket: "nhacbox-7c68f.firebasestorage.app",
+            messagingSenderId: "525662248278",
+            appId: "1:525662248278:web:cdc5c19be11afa038b4af7",
+            measurementId: "G-4T86NBSFQP"
+        };
+        
+        try { firebase.initializeApp(firebaseConfig); } catch(e){}
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        let currentUser = JSON.parse(localStorage.getItem('app_logged_user')) || null;
+        let globalMediaList = [];
+        let currentMediaData = null;
+        let mySubscriptions = JSON.parse(localStorage.getItem('my_subscriptions') || '[]');
+
+        function updateHeader() {
+            let act = document.getElementById('headerActions');
+            if(currentUser) {
+                act.innerHTML = `
+                    <div class="user-badge"><i class="fa-solid fa-user-circle"></i> ${currentUser.username}</div>
+                    <button class="btn-action" onclick="openUploadModal()"><i class="fa-solid fa-upload"></i> Đăng bài</button>
+                    <button class="btn-action" style="background:#ef4444;" onclick="handleDeleteAccount()"><i class="fa-solid fa-user-xmark"></i> Xóa TK</button>
+                    <button class="btn-action" style="background:#334155;" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i></button>
+                `;
+            } else {
+                act.innerHTML = `
+                    <button class="btn-action" onclick="openLoginModal()">Đăng nhập</button>
+                    <button class="btn-action" style="background:#334155;" onclick="openRegisterModal()">Đăng ký</button>
+                `;
+            }
+        }
+
+        function openLoginModal() { closeModals(); document.getElementById('loginModal').style.display = 'flex'; }
+        function openRegisterModal() { closeModals(); document.getElementById('registerModal').style.display = 'flex'; }
+        function openUploadModal() {
+            if(!currentUser) { alert("Vui lòng đăng nhập trước khi đăng bài!"); openLoginModal(); return; }
+            document.getElementById('uploadModal').style.display = 'flex';
+        }
+        function closeModals() { 
+            document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+            document.getElementById('uploadStatus').style.display = 'none';
+        }
+
+        function handleRegister() {
+            let email = document.getElementById('regEmail').value.trim().toLowerCase();
+            let username = document.getElementById('regUsername').value.trim();
+            let password = document.getElementById('regPassword').value.trim();
+
+            if(!email || !username || !password) { alert("Vui lòng điền đủ thông tin!"); return; }
+            if(!email.includes('@gmail.com')) { alert("Nhập đúng định dạng Gmail!"); return; }
+
+            if(localStorage.getItem('email_bound_' + email)) {
+                alert("❌ Gmail này đã được sử dụng cho tài khoản khác!");
+                return;
+            }
+            if(localStorage.getItem('user_acc_' + username)) {
+                alert("❌ Tên tài khoản đã tồn tại!");
+                return;
+            }
+
+            localStorage.setItem('user_acc_' + username, JSON.stringify({ username, password, email }));
+            localStorage.setItem('email_bound_' + email, username);
+
+            alert("✅ Đăng ký thành công!");
+            openLoginModal();
+        }
+
+        function handleLogin() {
+            let username = document.getElementById('loginUsername').value.trim();
+            let password = document.getElementById('loginPassword').value.trim();
+            let accRaw = localStorage.getItem('user_acc_' + username);
+
+            if(accRaw) {
+                let acc = JSON.parse(accRaw);
+                if(acc.password === password) {
+                    currentUser = { username: acc.username, email: acc.email };
+                    localStorage.setItem('app_logged_user', JSON.stringify(currentUser));
+                    closeModals(); updateHeader();
+                    alert("✨ Đăng nhập thành công!");
+                    return;
+                }
+            }
+            alert("❌ Sai tài khoản hoặc mật khẩu!");
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            localStorage.removeItem('app_logged_user');
+            updateHeader();
+            alert("Đã đăng xuất!");
+        }
+
+        // Tính năng Xóa tài khoản cá nhân
+        function handleDeleteAccount() {
+            if(!currentUser) return;
+            if(confirm("⚠️ Bạn có chắc chắn muốn XÓA VĨNH VIỄN tài khoản '" + currentUser.username + "' không?")) {
+                localStorage.removeItem('user_acc_' + currentUser.username);
+                localStorage.removeItem('email_bound_' + currentUser.email);
+                localStorage.removeItem('app_logged_user');
+                currentUser = null;
+                updateHeader();
+                alert("🗑️ Tài khoản đã được xóa thành công!");
+            }
+        }
+
+        // Tính năng Xóa video/audio trên Firebase
+        async function deleteVideo(docId, author) {
+            if(!currentUser) { alert("Vui lòng đăng nhập!"); return; }
+            if(currentUser.username !== author && currentUser.username !== 'Admin') {
+                alert("❌ Bạn chỉ có thể xóa bài viết do chính mình đăng!");
+                return;
+            }
+            if(confirm("Bạn có chắc muốn xóa bài đăng này không?")) {
+                try {
+                    await db.collection('nhacbox_media').doc(docId).delete();
+                    alert("🗑️ Đã xóa bài viết thành công!");
+                } catch(e) {
+                    alert("Lỗi khi xóa: " + e.message);
+                }
+            }
+        }
+
+        // Tính năng Subrice / Hủy Subrice tác giả
+        function toggleSubscribe(authorName, event) {
+            event.stopPropagation(); // Không cho bấm nhầm vào mở video
+            if(!currentUser) { alert("Vui lòng đăng nhập để đăng ký kênh!"); openLoginModal(); return; }
+            if(currentUser.username === authorName) { alert("Bạn không thể tự đăng ký chính mình!"); return; }
+
+            let idx = mySubscriptions.indexOf(authorName);
+            if(idx > -1) {
+                mySubscriptions.splice(idx, 1);
+                alert("Đã hủy đăng ký " + authorName);
+            } else {
+                mySubscriptions.push(authorName);
+                alert("🎉 Đã đăng ký thành công kênh của " + authorName + "!");
+            }
+            localStorage.setItem('my_subscriptions', JSON.stringify(mySubscriptions));
+            renderMedia(globalMediaList);
+        }
+
+        function renderMedia(list) {
+            let grid = document.getElementById('mediaGrid');
+            let html = '';
+            list.forEach(m => {
+                let isAudio = m.type === 'audio';
+                let thumbContent = isAudio 
+                    ? `<div class="audio-placeholder"><i class="fa-solid fa-music"></i></div>` 
+                    : `<video src="${m.url}" muted></video>`;
+                
+                let isSubscribed = mySubscriptions.includes(m.author);
+                let subBtnText = isSubscribed ? 'Đã Đăng Ký' : 'Đăng Ký';
+                let subBtnClass = isSubscribed ? 'btn-sub-action subscribed' : 'btn-sub-action';
+
+                let deleteBtnHtml = (currentUser && (currentUser.username === m.author || currentUser.username === 'Admin')) 
+                    ? `<button class="btn-delete-vid" onclick="deleteVideo('${m.id}', '${m.author}'); event.stopPropagation();"><i class="fa-solid fa-trash"></i> Xóa</button>` 
+                    : '';
+
+                html += `
+                    <div class="media-card" onclick="playMedia('${m.url}', '${m.title.replace(/'/g,"")}', '${m.author}', '${m.type}')">
+                        <div class="thumb-box">
+                            ${thumbContent}
+                            <div class="badge">${isAudio ? 'MP3' : 'MP4'}</div>
+                        </div>
+                        <div class="media-info">
+                            <div class="media-title">${m.title}</div>
+                            <div class="media-footer-row">
+                                <div class="media-author">Bởi: ${m.author}</div>
+                                <div style="display:flex; gap:6px; align-items:center;">
+                                    <button class="${subBtnClass}" onclick="toggleSubscribe('${m.author}', event)">${subBtnText}</button>
+                                    ${deleteBtnHtml}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html || '<p style="color:#94a3b8;">Chưa có bài đăng nào.</p>';
+        }
+
+        function playMedia(url, title, author, type) {
+            currentMediaData = { url, title, author, type };
+            let videoEl = document.getElementById('activeVideo');
+            let audioEl = document.getElementById('activeAudio');
+            let visualizerEl = document.getElementById('audioVisualizer');
+
+            document.getElementById('headerTitle').innerText = title;
+            document.getElementById('bottomTitle').innerText = title;
+            document.getElementById('bottomAuthor').innerText = author;
+            document.getElementById('playPauseIcon').className = "fa-solid fa-pause";
+            document.getElementById('playerBox').classList.add('active');
+
+            if(type === 'audio') {
+                videoEl.style.display = 'none'; videoEl.pause();
+                visualizerEl.style.display = 'flex';
+                audioEl.src = url; audioEl.play();
+            } else {
+                visualizerEl.style.display = 'none'; audioEl.pause();
+                videoEl.style.display = 'block';
+                videoEl.src = url; videoEl.play();
+            }
+        }
+
+        function togglePlayPause() {
+            if(!currentMediaData) return;
+            let target = currentMediaData.type === 'audio' ? document.getElementById('activeAudio') : document.getElementById('activeVideo');
+            if(target.paused) { target.play(); document.getElementById('playPauseIcon').className = "fa-solid fa-pause"; }
+            else { target.pause(); document.getElementById('playPauseIcon').className = "fa-solid fa-play"; }
+        }
+
+        function openPlayerBox() { document.getElementById('playerBox').classList.add('active'); }
+        function closePlayerBox() { 
+            document.getElementById('playerBox').classList.remove('active'); 
+            document.getElementById('activeVideo').pause();
+            document.getElementById('activeAudio').pause();
+        }
+
+        async function uploadFileToCloudStorage() {
+            let title = document.getElementById('inputTitle').value.trim();
+            let fileInput = document.getElementById('inputFile').files[0];
+
+            if(!title) { alert("Vui lòng nhập tiêu đề bài viết!"); return; }
+            if(!fileInput) { alert("Vui lòng chọn file video/nhạc!"); return; }
+
+            let statusEl = document.getElementById('uploadStatus');
+            statusEl.style.display = 'block';
+            statusEl.innerText = "⏳ Đang tải tệp lên đám mây... Vui lòng đợi giây lát!";
+
+            try {
+                let storageRef = storage.ref().child('media/' + Date.now() + '_' + fileInput.name);
+                let snapshot = await storageRef.put(fileInput);
+                let downloadURL = await snapshot.ref.getDownloadURL();
+
+                let type = fileInput.type.includes('audio') ? 'audio' : 'video';
+                let newItem = {
+                    title: title,
+                    author: currentUser.username,
+                    type: type,
+                    url: downloadURL,
+                    createdAt: Date.now()
+                };
+
+                await db.collection('nhacbox_media').add(newItem);
+
+                statusEl.innerText = "✅ Tải lên thành công!";
+                alert("🚀 Đăng tải thành công!");
+                closeModals();
+                document.getElementById('inputTitle').value = '';
+                document.getElementById('inputFile').value = '';
+            } catch (error) {
+                statusEl.innerText = "❌ Lỗi tải lên: " + error.message;
+            }
+        }
+
+        function filterMedia(kw) {
+            let res = globalMediaList.filter(m => m.title.toLowerCase().includes(kw.toLowerCase()));
+            renderMedia(res);
+        }
+
+        // Lắng nghe Realtime từ Firestore
+        try {
+            db.collection('nhacbox_media').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+                globalMediaList = [];
+                snapshot.forEach(doc => {
+                    let d = doc.data();
+                    d.id = doc.id; // Gắn ID để dùng tính năng xóa
+                    globalMediaList.push(d);
+                });
+                renderMedia(globalMediaList);
+            });
+        } catch(e) {}
+
+        updateHeader();
+    </script>
+</body>
+</html>
